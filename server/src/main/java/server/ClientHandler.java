@@ -6,6 +6,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.util.concurrent.TimeoutException;
 
 public class ClientHandler {
 
@@ -27,13 +29,13 @@ public class ClientHandler {
 
             new Thread(() -> {
                 try {
-
+                    socket.setSoTimeout(120000);
                     // цикл аутентификации
                     while (true) {
                         String str = in.readUTF();
 
-                        if (str.equals("/end")) {
-                            sendMsg("/end");
+                        if (str.equals(ServiceMessages.END)) {
+                            sendMsg(ServiceMessages.END);
                             break;
                         }
                         if(str.startsWith(ServiceMessages.AUTH)){
@@ -51,6 +53,7 @@ public class ClientHandler {
                                     sendMsg(ServiceMessages.AUTH_OK + " " + nickname);
                                     server.subscribe(this);
                                     System.out.println("Client: " + nickname + " authenticated");
+                                    socket.setSoTimeout(0);
                                     break;
                                 } else {
                                     sendMsg("С этим логином уже зашли в чат");
@@ -59,16 +62,16 @@ public class ClientHandler {
                                 sendMsg("Неверный логин / пароль");
                             }
                         }
-                        if (str.startsWith("/reg")){
+                        if (str.startsWith(ServiceMessages.REG)){
                             String[] token = str.split(" ", 4);
                             if(token.length < 4){
                                 continue;
                             }
                             if(server.getAuthService().
                                     registration(token[1],token[2],token[3])) {
-                                sendMsg("/reg_ok");
+                                sendMsg(ServiceMessages.REG_OK);
                             } else {
-                                sendMsg("/reg_no");
+                                sendMsg(ServiceMessages.REG_NO);
                             }
 
                         }
@@ -79,11 +82,11 @@ public class ClientHandler {
                         String str = in.readUTF();
 
                         if(str.startsWith("/")){
-                            if (str.equals("/end")) {
-                                sendMsg("/end");
+                            if (str.equals(ServiceMessages.END)) {
+                                sendMsg(ServiceMessages.END);
                                 break;
                             }
-                            if (str.startsWith("/to")){
+                            if (str.startsWith(ServiceMessages.TO)){
                                 String[] token = str.split(" ", 3);
                                 if(token.length < 3){
                                     continue;
@@ -94,6 +97,8 @@ public class ClientHandler {
                             server.broadcastMsg(this, str);
                         }
                     }
+                } catch (SocketTimeoutException e){
+                    sendMsg(ServiceMessages.END);
                 } catch (IOException e) {
                     e.printStackTrace();
                 } finally {

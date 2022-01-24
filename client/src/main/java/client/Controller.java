@@ -83,7 +83,7 @@ public class Controller implements Initializable {
                 System.out.println("bye!");
                 if(socket != null && !socket.isClosed()){
                     try {
-                        out.writeUTF("/end");
+                        out.writeUTF(ServiceMessages.END);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -107,7 +107,7 @@ public class Controller implements Initializable {
                         String str = in.readUTF();
 
                         if (str.startsWith("/")) {
-                            if (str.equals("/end")) {
+                            if (str.equals(ServiceMessages.END)) {
                                 break;
                             }
                             if (str.startsWith(ServiceMessages.AUTH_OK)) {
@@ -115,7 +115,7 @@ public class Controller implements Initializable {
                                 setAuthenticated(true);
                                 break;
                             }
-                            if (str.startsWith("/reg")) {
+                            if (str.startsWith(ServiceMessages.REG)) {
                                 regController.reStatus(str);
                             }
 
@@ -130,7 +130,7 @@ public class Controller implements Initializable {
                         String str = in.readUTF();
 
                         if (str.startsWith("/")) {
-                            if (str.equals("/end")) {
+                            if (str.equals(ServiceMessages.END)) {
                                 setAuthenticated(false);
                                 break;
                             }
@@ -214,7 +214,7 @@ public class Controller implements Initializable {
 
     public void clickClientList(MouseEvent mouseEvent) {
         String receiver = clientList.getSelectionModel().getSelectedItem();
-        textField.setText("/to " + receiver + " ");
+        textField.setText(ServiceMessages.TO + " " + receiver + " ");
     }
 
     public void clickBtnReg(ActionEvent actionEvent) {
@@ -247,7 +247,7 @@ public class Controller implements Initializable {
         if (socket == null || socket.isClosed()) {
             connect();
         }
-        String msg = String.format("/reg %s %s %s", login, password, nickname);
+        String msg = String.format("%s %s %s %s", ServiceMessages.REG, login, password, nickname);
         try {
             out.writeUTF(msg);
         } catch (IOException e) {
