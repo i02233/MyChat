@@ -1,5 +1,7 @@
 package server;
 
+import service.ServiceMessages;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -13,6 +15,7 @@ public class ClientHandler {
     private DataOutputStream out;
     private boolean authenticated;
     private String nickname;
+    private String login;
 
     public ClientHandler(Server server, Socket socket) {
         this.server = server;
@@ -22,9 +25,9 @@ public class ClientHandler {
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
 
-
             new Thread(() -> {
                 try {
+
                     // цикл аутентификации
                     while (true) {
                         String str = in.readUTF();
@@ -33,23 +36,41 @@ public class ClientHandler {
                             sendMsg("/end");
                             break;
                         }
-                        if(str.startsWith("/auth")){
+                        if(str.startsWith(ServiceMessages.AUTH)){
                             String[] token = str.split(" ", 3);
                             if(token.length < 3){
                                 continue;
                             }
                             String newNick = server.getAuthService()
                                     .getNicknameByLoginAndPassword(token[1], token[2]);
-                            if (newNick != null){
-                                authenticated = true;
-                                nickname = newNick;
-                                sendMsg("/authok " + nickname);
-                                server.subscribe(this);
-                                System.out.println("Client: " + nickname + " authenticated");
-                                break;
+                            login = token[1];
+                            if (newNick != null) {
+                                if(!server.isLoginAuthenticated(login)){
+                                    authenticated = true;
+                                    nickname = newNick;
+                                    sendMsg(ServiceMessages.AUTH_OK + " " + nickname);
+                                    server.subscribe(this);
+                                    System.out.println("Client: " + nickname + " authenticated");
+                                    break;
+                                } else {
+                                    sendMsg("С этим логином уже зашли в чат");
+                                }
                             } else {
                                 sendMsg("Неверный логин / пароль");
                             }
+                        }
+                        if (str.startsWith("/reg")){
+                            String[] token = str.split(" ", 4);
+                            if(token.length < 4){
+                                continue;
+                            }
+                            if(server.getAuthService().
+                                    registration(token[1],token[2],token[3])) {
+                                sendMsg("/reg_ok");
+                            } else {
+                                sendMsg("/reg_no");
+                            }
+
                         }
 
                     }
@@ -104,5 +125,9 @@ public class ClientHandler {
 
     public String getNickname() {
         return nickname;
+    }
+
+    public String getLogin() {
+        return login;
     }
 }
