@@ -38,16 +38,16 @@ public class ClientHandler {
                             sendMsg(ServiceMessages.END);
                             break;
                         }
-                        if(str.startsWith(ServiceMessages.AUTH)){
+                        if (str.startsWith(ServiceMessages.AUTH)) {
                             String[] token = str.split(" ", 3);
-                            if(token.length < 3){
+                            if (token.length < 3) {
                                 continue;
                             }
                             String newNick = server.getAuthService()
                                     .getNicknameByLoginAndPassword(token[1], token[2]);
                             login = token[1];
                             if (newNick != null) {
-                                if(!server.isLoginAuthenticated(login)){
+                                if (!server.isLoginAuthenticated(login)) {
                                     authenticated = true;
                                     nickname = newNick;
                                     sendMsg(ServiceMessages.AUTH_OK + " " + nickname);
@@ -62,13 +62,13 @@ public class ClientHandler {
                                 sendMsg("Неверный логин / пароль");
                             }
                         }
-                        if (str.startsWith(ServiceMessages.REG)){
+                        if (str.startsWith(ServiceMessages.REG)) {
                             String[] token = str.split(" ", 4);
-                            if(token.length < 4){
+                            if (token.length < 4) {
                                 continue;
                             }
-                            if(server.getAuthService().
-                                    registration(token[1],token[2],token[3])) {
+                            if (server.getAuthService().
+                                    registration(token[1], token[2], token[3])) {
                                 sendMsg(ServiceMessages.REG_OK);
                             } else {
                                 sendMsg(ServiceMessages.REG_NO);
@@ -81,23 +81,41 @@ public class ClientHandler {
                     while (authenticated) {
                         String str = in.readUTF();
 
-                        if(str.startsWith("/")){
+                        if (str.startsWith("/")) {
                             if (str.equals(ServiceMessages.END)) {
                                 sendMsg(ServiceMessages.END);
                                 break;
                             }
-                            if (str.startsWith(ServiceMessages.TO)){
+                            if (str.startsWith(ServiceMessages.TO)) {
                                 String[] token = str.split(" ", 3);
-                                if(token.length < 3){
+                                if (token.length < 3) {
                                     continue;
                                 }
                                 server.privateMsg(this, token[1], token[2]);
+                            }
+                            if (str.startsWith(ServiceMessages.CHANGE_NICK)) {
+                                String[] token = str.split("\\s+", 2);
+                                if (token.length < 2) {
+                                    continue;
+                                }
+                                if (token[1].contains(" ")) {
+                                    sendMsg("Ник не может содержать пробелов");
+                                    continue;
+                                }
+                                if (server.getAuthService().changeNick(this.nickname, token[1])) {
+                                    sendMsg(ServiceMessages.YOUR_NICK + token[1]);
+                                    sendMsg("Ваш ник изменен на " + token[1]);
+                                    this.nickname = token[1];
+                                    server.broadcastClientList();
+                                } else {
+                                    sendMsg("Не удалось изменить ник. Ник " + token[1] + " уже существует");
+                                }
                             }
                         } else {
                             server.broadcastMsg(this, str);
                         }
                     }
-                } catch (SocketTimeoutException e){
+                } catch (SocketTimeoutException e) {
                     sendMsg(ServiceMessages.END);
                 } catch (IOException e) {
                     e.printStackTrace();

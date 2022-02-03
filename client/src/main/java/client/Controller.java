@@ -81,7 +81,7 @@ public class Controller implements Initializable {
             stage = (Stage) textField.getScene().getWindow();
             stage.setOnCloseRequest(event -> {
                 System.out.println("bye!");
-                if(socket != null && !socket.isClosed()){
+                if (socket != null && !socket.isClosed()) {
                     try {
                         out.writeUTF(ServiceMessages.END);
                     } catch (IOException e) {
@@ -134,7 +134,7 @@ public class Controller implements Initializable {
                                 setAuthenticated(false);
                                 break;
                             }
-                            if (str.startsWith("/clientList")) {
+                            if (str.startsWith(ServiceMessages.CLIENT_LIST)) {
                                 String[] token = str.split(" ");
                                 Platform.runLater(() -> {
                                     clientList.getItems().clear();
@@ -142,6 +142,10 @@ public class Controller implements Initializable {
                                         clientList.getItems().add(token[i]);
                                     }
                                 });
+                            }
+                            if (str.startsWith(ServiceMessages.YOUR_NICK)) {
+                                nickname = str.split(" ")[1];
+                                setTitle(nickname);
                             }
 
                         } else {
@@ -199,11 +203,11 @@ public class Controller implements Initializable {
         }
     }
 
-    private void setTitle(String nickname){
+    private void setTitle(String nickname) {
         String title;
-        if(nickname.equals("")){
+        if (nickname.equals("")) {
             title = "My Chat";
-        }else{
+        } else {
             title = String.format("My Chat | %s", nickname);
         }
         Platform.runLater(() -> {
@@ -243,7 +247,8 @@ public class Controller implements Initializable {
             e.printStackTrace();
         }
     }
-    public void tryToReg(String login, String password, String nickname){
+
+    public void tryToReg(String login, String password, String nickname) {
         if (socket == null || socket.isClosed()) {
             connect();
         }

@@ -31,8 +31,8 @@ public class RegController {
         controller.tryToReg(login, password, nickname);
     }
 
-    public void reStatus(String result){
-        if(result.equals(ServiceMessages.REG_OK)){
+    public void reStatus(String result) {
+        if (result.equals(ServiceMessages.REG_OK)) {
             textArea.appendText("Регистрация прошла успешно\n");
         } else {
             textArea.appendText("Регистрация не получилась. Логин или никнейм заняты\n");
