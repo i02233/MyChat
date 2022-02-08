@@ -56,6 +56,7 @@ public class Controller implements Initializable {
     private Stage stage;
     private Stage regStage;
     private RegController regController;
+    private String login;
 
     public void setAuthenticated(boolean authenticated) {
         this.authenticated = authenticated;
@@ -68,6 +69,7 @@ public class Controller implements Initializable {
 
         if (!authenticated) {
             nickname = "";
+            History.stop();
         }
 
         setTitle(nickname);
@@ -113,6 +115,8 @@ public class Controller implements Initializable {
                             if (str.startsWith(ServiceMessages.AUTH_OK)) {
                                 nickname = str.split(" ")[1];
                                 setAuthenticated(true);
+                                textArea.appendText(History.getLast100LinesOfHistory(login));
+                                History.start(login);
                                 break;
                             }
                             if (str.startsWith(ServiceMessages.REG)) {
@@ -150,6 +154,7 @@ public class Controller implements Initializable {
 
                         } else {
                             textArea.appendText(str + "\n");
+                            History.writeLine(str);
                         }
                     }
 
@@ -192,6 +197,8 @@ public class Controller implements Initializable {
         if (socket == null || socket.isClosed()) {
             connect();
         }
+
+        login = loginField.getText().trim();
 
         try {
             String msg = String.format("%s %s %s", ServiceMessages.AUTH,
